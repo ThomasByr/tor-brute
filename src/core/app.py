@@ -1,5 +1,6 @@
 import logging
 import re
+import time
 from configparser import ConfigParser
 from multiprocessing.pool import ThreadPool
 
@@ -36,6 +37,9 @@ class App:
         self.session.cookies.clear_session_cookies()
         response: requests.Response = None
         try_no = 0
+
+        # 3 tries to connect to the target
+        # connected if some response and status code is 200
         while try_no < 3 and (not response or response.status_code != 200):
             try:
                 response = self.session.post(
@@ -49,6 +53,7 @@ class App:
                 )
             except:  # noqa
                 self.logger.debug("exception fallback ... retrying ...")
+                time.sleep(1)  # wait to ~avoid~ spamming
                 try_no += 1
         else:
             if not response:
@@ -65,12 +70,12 @@ class App:
         user = PasswdGenerator(self.username_path, self.it_comb[0])
         passwd = PasswdGenerator(self.password_path, self.it_comb[1])
 
-        digits = len(str(user.count))  # number of digits of the total
+        digits = len(str(user.count))  # number of digits in user count
 
         self.logger.info("Starting Tor 🧄 session ...")
         with TorProxy() as tor:
             self.session.proxies = {
-                "http": f"socks5h://localhost:{tor.port}",  # Use Tor for HTTP connections
+                "http": f"socks5h://localhost:{tor.port}",  # use Tor for HTTP connections
             }
 
             with ThreadPool(self.N_PROCESS) as pool:

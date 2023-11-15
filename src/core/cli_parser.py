@@ -59,7 +59,7 @@ def parser() -> Namespace:
     )
     parser.add_argument(
         "-i",
-        "--it-comb",
+        "--iter",
         dest="it_comb",
         default=None,
         type=parse_it_comb,
