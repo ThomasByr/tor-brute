@@ -54,10 +54,11 @@ class App:
             except:  # noqa
                 self.logger.debug("exception fallback ... retrying ...")
                 time.sleep(1)  # wait to ~avoid~ spamming
+            finally:
                 try_no += 1
         else:
             if not response:
-                self.logger.critical("failed to connect to the target")
+                self.logger.critical("failed multiple reconnect to target ❌")
 
         if self.target.search(response.text):
             self.logger.info(
