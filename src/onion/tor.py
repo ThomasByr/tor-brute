@@ -25,8 +25,7 @@ class TorProxy:
                 },
             )
         except OSError as e:
-            self.logger.critical("failed to start Tor service (maybe stop service ?) ❌")
-            raise e
+            self.logger.critical("failed to start Tor service (maybe stop service ?) ❌\n%s", e)
         return self
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:  # noqa
