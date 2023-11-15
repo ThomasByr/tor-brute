@@ -1,0 +1,13 @@
+# note : all dependencies are locked to a specific version
+#        to ensure reproducibility of the environment ;
+#        exceptions are made for some minor versions
+
+
+termcolor            == 2.3.*          # colored output
+typing-extensions    >= 4.6, < 5.0     # typing_extensions module
+colorama             == 0.4.*          # colored output
+alive-progress       == 3.1.*          # for progress bars
+
+stem                 == 1.8.*          # interact with Tor
+requests             >= 2.26, < 3.0    # HTTP requests
+PySocks              >= 1.7, < 2.0     # SOCKS proxy support
