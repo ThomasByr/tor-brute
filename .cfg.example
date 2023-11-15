@@ -1,0 +1,7 @@
+[url-endpoints]
+target = what is the thing in the response page that ensures you are connected
+post_url = the url to post to
+
+[html-fields]
+username_field = name of the username field (in the html)
+password_field = name of the password field (in the html)
