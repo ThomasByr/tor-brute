@@ -74,12 +74,12 @@ def init_logger(log_lvl: int = logging.INFO) -> bool:
 
     # create console handler with a higher log level
     console_handler = UselessHandler()
-    console_handler.setLevel(log_lvl)
+    console_handler.setLevel(logging.DEBUG)  # lowest level to log
     console_handler.setFormatter(UsefulFormatter(colored_output=colored_output))
 
     # create file handler which logs even debug messages
     file_handler = logging.FileHandler(".log", mode="w", encoding="utf-8")
-    file_handler.setLevel(logging.DEBUG)
+    file_handler.setLevel(logging.DEBUG)  # lowest level to log
     file_handler.setFormatter(UsefulFormatter(colored_output=False))
 
     logging.basicConfig(
