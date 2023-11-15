@@ -95,9 +95,9 @@ username_or_password_part_3
 | `--config`          | path to the config file               | `.cfg`              |
 | `--users`           | path to the usernames file            | `assets/users.txt`  |
 | `--passwd`          | path to the passwords file            | `assets/passwd.txt` |
-| `--it-comb` [\*][1] | number of combination for user/passwd | `3, 2`              |
+| `--iter` [\*][1] | number of combination for user/passwd | `3, 2`              |
 
-[1]: ## "a file with a, b, c with it-comb=2 would produce a, b, c, ab, ac, ba, bc, ca, cb"
+[1]: ## "a file with a, b, c with iter=2 would produce a, b, c, ab, ac, ba, bc, ca, cb"
 
 <!-- markdownlint-enable MD051 -->
 
