@@ -112,7 +112,24 @@ class App:
                             lambda p: self.post_search(u, p[:]),  # noqa
                             passwd(),  # todo: faster gen after 1st time
                         ):
-                            bar()
+                            try:
+                                bar()
+                            except RuntimeError:
+                                # RuntimeError: dictionary changed size during iteration
+                                #
+                                # This is because of the `alive_bar` package
+                                # which uses a dict internally to store the
+                                # progress bar state.
+                                #
+                                # This error is raised when the progress bar
+                                # is updated while the bar is being rendered.
+                                #
+                                # This is not a problem because the progress
+                                # bar is only used to display the progress
+                                # and not to store the state.
+                                #
+                                # So we just ignore this error.
+                                pass
 
                         tor.identity_swap()
                         bar.title(f"on user {(i+2):0{digits}}/{user.count}")
