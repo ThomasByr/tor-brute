@@ -34,14 +34,14 @@
 >
 > Please note we do not officially support Windows or MacOS, but we do provide some instructions for those who want to use it on these platforms.
 
-You do not explicitly need a conda environment for the bot to run. But it is always recommended nontheless, especially because the next LTS of Ubuntu won't let users pip-install anything without a virtual environment. At the time of writing, this app `python >= 3.8` to run.
+You do not explicitly need a conda environment for the bot to run. But it is always recommended nontheless, especially because the next LTS of Ubuntu won't let users pip-install anything without a virtual environment. At the time of writing, this app requires `python >= 3.8` to run.
 
 First, install the dependencies :
 
 ```bash
 sudo apt-get update
 sudo apt-get install tor
-sudo service tor stop
+sudo service tor stop  # the app will start its own tor instance
 ```
 
 Then clone the repository and cd into it :
@@ -52,7 +52,7 @@ git clone git@github.com:ThomasByr/tor-brute.git
 cd tor-brute
 ```
 
-You can create and activate a conda environment with the following commands (make sure to give it a name in [environment.yml](environment.yml)) :
+You can create and activate a conda environment with the following commands :
 
 ```bash
 # Creates environment and install dependencies
@@ -76,7 +76,7 @@ python tor-brute.py
 
 ## 🔧 Usage
 
-Simply create a `.cfg` file from [.cfg.example](.cfg.example) and fill it, then provide text files for both usernames and passwords.
+Simply create a `.cfg` file from [.cfg.example](.cfg.example) and fill it, then provide text files for both usernames and passwords. The app will try every combination of usernames and passwords, and will issue a log record for each successful login.
 
 ```txt
 username_or_password_part_1
@@ -87,14 +87,14 @@ username_or_password_part_3
 
 <!-- markdownlint-disable MD051 -->
 
-| argument            | hint                                  | default             |
-| ------------------- | ------------------------------------- | ------------------- |
-| `--help`            | show help message and exit            |                     |
-| `--version`         | show program's version                |                     |
-| `--debug`           | debug mode                            | `False`             |
-| `--config`          | path to the config file               | `.cfg`              |
-| `--users`           | path to the usernames file            | `assets/users.txt`  |
-| `--passwd`          | path to the passwords file            | `assets/passwd.txt` |
+| argument         | hint                                  | default             |
+| ---------------- | ------------------------------------- | ------------------- |
+| `--help`         | show help message and exit            |                     |
+| `--version`      | show program's version                |                     |
+| `--debug`        | debug mode                            | `False`             |
+| `--config`       | path to the config file               | `.cfg`              |
+| `--users`        | path to the usernames file            | `assets/users.txt`  |
+| `--passwd`       | path to the passwords file            | `assets/passwd.txt` |
 | `--iter` [\*][1] | number of combination for user/passwd | `3, 2`              |
 
 [1]: ## "a file with a, b, c with iter=2 would produce a, b, c, ab, ac, ba, bc, ca, cb"
@@ -173,6 +173,7 @@ Please read the [changelog](changelog.md) file for the full history !
 - use threads
 - create a cli
 - unique progression bar for all users (so this is not spammy)
+- removed color and emotes from streams that don't support it
 
 </details>
 
@@ -180,11 +181,13 @@ Please read the [changelog](changelog.md) file for the full history !
 
 **TODO** (first implementation version)
 
-- [x] add a simple cli
+- [x] add a simple cli (0.1.1)
+- [ ] option to not use tor (?)
+- [ ] option to change Tor ID each X requests (would need to implement a catch-up mechanism because thread jobs are unordered)
 
 **Known Bugs** (latest fix)
 
-- [ ] ...
+- [ ] lagging threads are not catching up, especially when `ReadTimeout` is reached (interferes with Tor ID swap)
 
 ## 🎨 Logo and Icons
 
