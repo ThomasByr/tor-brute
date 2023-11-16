@@ -62,7 +62,7 @@ class TorProxy:
             try:
                 r = session.get("http://httpbin.org/ip", timeout=10).text
             except ConnectionError:
-                self.logger.error("Failed to request httpbin.org, skipping 🔍")
+                self.logger.error("failed to request httpbin.org, skipping 🔍")
                 return None
             return r.split("\n")[1].split('"')[3]
 
