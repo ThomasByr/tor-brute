@@ -57,6 +57,7 @@ if __name__ == "__main__":
     args = check_args(parser())
     supports_color = init_logger(logging.DEBUG if args.debug else logging.INFO)
 
+    # https://stackoverflow.com/a/46400076/13708995
     stem_logger = get_logger()
     stem_logger.propagate = False
 
