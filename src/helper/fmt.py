@@ -87,4 +87,5 @@ class UselessHandler(logging.StreamHandler):
         super().emit(record)
         if record.levelno >= logging.CRITICAL:  # exit on critical errors
             show_cursor()
+            print("Terminated")
             os.kill(os.getpid(), signal.SIGTERM)

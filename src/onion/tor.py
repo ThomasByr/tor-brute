@@ -1,4 +1,6 @@
 import logging
+import signal
+import sys
 
 import requests
 import stem.control as stc
@@ -12,6 +14,9 @@ class TorProxy:
         self.logger = logging.getLogger(".".join(__name__.split(".")[1:]))
         self.__port = 9050
         self.__tor_process = None
+
+        signal.signal(signal.SIGINT, self.__on_end)
+        signal.signal(signal.SIGTERM, self.__on_end)
 
     def __enter__(self) -> "TorProxy":
         # Start the Tor service
@@ -31,8 +36,14 @@ class TorProxy:
         return self
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:  # noqa
-        # Stop the Tor service
         self.__tor_process.kill()
+
+    def __on_end(self, signum, frame):  # noqa
+        self.__tor_process.kill()
+        self.logger.warning(
+            "Received signal %s, exiting ...", signal.Signals(signum).name
+        )
+        sys.exit(0)
 
     @property
     def port(self) -> int:
@@ -48,7 +59,11 @@ class TorProxy:
             }
             # http://httpbin.org/ip returns a json like:
             # b'{\n  "origin": "<IP>"\n}\n'
-            r = session.get("http://httpbin.org/ip").content.decode("utf-8")
+            try:
+                r = session.get("http://httpbin.org/ip", timeout=10).text
+            except ConnectionError:
+                self.logger.error("Failed to request httpbin.org, skipping 🔍")
+                return None
             return r.split("\n")[1].split('"')[3]
 
     def identity_swap(self) -> None:
@@ -57,8 +72,9 @@ class TorProxy:
         with stc.Controller.from_port(port=9051) as controller:
             controller.authenticate("my_password")  # hehe
             controller.signal(stc.Signal.NEWNYM)
-        ip_after = self.ip
+        ip_after = self.ip if ip_before else None
 
-        self.logger.debug("Identity swap %s -> %s ♻️", ip_before, ip_after)
-        if ip_before == ip_after:
-            self.logger.critical("Tor identity swap failed ❌")
+        if ip_before and ip_after:
+            self.logger.debug("Identity swap %s -> %s ♻️", ip_before, ip_after)
+            if ip_before == ip_after:
+                self.logger.critical("Tor identity swap failed ❌")
