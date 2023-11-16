@@ -10,6 +10,10 @@ from typing_extensions import override
 __all__ = ["UsefulFormatter", "UselessHandler"]
 
 
+# hide and show cursor functions from colorama
+# someone stripped colorama to only keep these functions
+# https://stackoverflow.com/a/10455937/13708995
+
 if os.name == "nt":
     import msvcrt  # type: ignore # noqa
     import ctypes  # type: ignore # noqa
