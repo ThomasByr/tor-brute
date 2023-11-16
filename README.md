@@ -172,6 +172,7 @@ Please read the [changelog](changelog.md) file for the full history !
 
 - use threads
 - create a cli
+- unique progression bar for all users (so this is not spammy)
 
 </details>
 
