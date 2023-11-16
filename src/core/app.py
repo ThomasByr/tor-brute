@@ -79,7 +79,10 @@ class App:
                 "http": f"socks5h://localhost:{tor.port}",  # use Tor for HTTP connections
             }
 
-            with alive_bar(total=user.count * passwd.count, title=f"on user {1:0{digits}}/{user.count}") as bar:
+            with alive_bar(
+                total=user.count * passwd.count,
+                title=f"on user {1:0{digits}}/{user.count}",
+            ) as bar:
                 with ThreadPool(self.N_PROCESS) as pool:
                     for i, u in enumerate(user()):
                         for _ in pool.imap_unordered(
