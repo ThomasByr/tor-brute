@@ -12,6 +12,7 @@ __all__ = ["TorProxy"]
 class TorProxy:
     def __init__(self) -> None:
         self.logger = logging.getLogger(".".join(__name__.split(".")[1:]))
+        self.__consecutive_exit_node_change_failures = 0
         self.__port = 9050
         self.__tor_process = None
 
@@ -75,6 +76,13 @@ class TorProxy:
         ip_after = self.ip if ip_before else None
 
         if ip_before and ip_after:
-            self.logger.debug("Identity swap %s -> %s ♻️", ip_before, ip_after)
+            self.logger.debug("exit node %s -> %s ♻️", ip_before, ip_after)
             if ip_before == ip_after:
-                self.logger.critical("Tor identity swap failed ❌")
+                self.__consecutive_exit_node_change_failures += 1
+                self.logger.warning("Tor exit node did not change while id swap 🥷")
+                if self.__consecutive_exit_node_change_failures >= 3:
+                    self.logger.critical(
+                        "too many consecutive exit node change failures, exiting ... ❌"
+                    )
+            else:
+                self.__consecutive_exit_node_change_failures = 0
