@@ -39,7 +39,7 @@ class App:
         self.it_comb = args.it_comb
 
     def post_search(self, username_field: str, password_field: str) -> bool:
-        self.session.cookies.clear_session_cookies()
+        self.session.cookies.clear_session_cookies()  # todo: benchmark against .clear()
         response: requests.Response = None
         try_no = 0
 
@@ -53,7 +53,7 @@ class App:
                         self.username_field: username_field,
                         self.password_field: password_field,
                     },
-                    allow_redirects=True,
+                    allow_redirects=True,  # maybe new page when successfull login
                     timeout=10,  # 10 seconds
                 )
                 if response and response.status_code == 200:
