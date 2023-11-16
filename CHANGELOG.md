@@ -8,3 +8,4 @@
 
 - use threads
 - create a cli
+- unique progression bar for all users (so this is not spammy)
