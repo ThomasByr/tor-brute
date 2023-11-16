@@ -23,6 +23,7 @@ def parse_it_comb(it_comb: str) -> tuple[int, int]:
         return (int(parts[0]), int(parts[0]))
     elif len(parts) == 2:
         return (int(parts[0]), int(parts[1]))
+    raise ValueError("invalid it_comb value")
 
 
 def parser() -> Namespace:

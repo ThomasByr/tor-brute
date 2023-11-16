@@ -40,7 +40,8 @@ class TorProxy:
         self.__tor_process.kill()
 
     def __on_end(self, signum, frame):  # noqa
-        self.__tor_process.kill()
+        if self.__tor_process:
+            self.__tor_process.kill()
         self.logger.warning(
             "Received signal %s, exiting ...", signal.Signals(signum).name
         )

@@ -1,6 +1,7 @@
 import logging
 from itertools import combinations
 from math import comb
+from typing import Generator
 
 __all__ = ["PasswdGenerator"]
 
@@ -18,7 +19,7 @@ class PasswdGenerator:
         # bellow is NOT executed if not debug
         self.logger.debug("[*] %s loaded with %d elements", filepath, self.count)
 
-    def __call__(self) -> str:
+    def __call__(self) -> Generator[str, None, None]:
         """yields all possible combinations of the chunks"""
         for i in range(1, self.max_cmb_len + 1):
             for combination in combinations(self.chunks, i):

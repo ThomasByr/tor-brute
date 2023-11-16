@@ -102,12 +102,10 @@ class App:
                 "http": f"socks5h://localhost:{tor.port}",  # use Tor for HTTP connections
             }
 
-            with alive_bar(
-                total=user.count * passwd.count,
-                title=f"on user {1:0{digits}}/{user.count}",
-            ) as bar:
+            with alive_bar(total=user.count * passwd.count) as bar:
                 with ThreadPool(self.N_PROCESS) as pool:
                     for i, u in enumerate(user()):
+                        bar.title(f"on user {(i+1):0{digits}}/{user.count}")
                         for _ in pool.imap_unordered(
                             lambda p: self.post_search(u, p[:]),  # noqa
                             passwd(),  # todo: faster gen after 1st time
@@ -132,6 +130,5 @@ class App:
                                 pass
 
                         tor.identity_swap()
-                        bar.title(f"on user {(i+2):0{digits}}/{user.count}")
 
         self.logger.info("Done ✅")
