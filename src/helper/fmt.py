@@ -1,13 +1,37 @@
 import logging
 import os
-import sys
+import re
 import signal
+import sys
 from typing import Any
 
 from termcolor import colored
 from typing_extensions import override
 
 __all__ = ["UsefulFormatter", "UselessHandler"]
+
+emoji_pattern = re.compile(
+    "["
+    "\U0001F600-\U0001F64F"  # emoticons
+    "\U0001F300-\U0001F5FF"  # symbols & pictographs
+    "\U0001F680-\U0001F6FF"  # transport & map symbols
+    "\U0001F1E0-\U0001F1FF"  # flags (iOS)
+    "\U00002500-\U00002BEF"  # chinese char
+    "\U00002702-\U000027B0"
+    "\U000024C2-\U0001F251"
+    "\U0001f926-\U0001f937"
+    "\U00010000-\U0010ffff"
+    "\u2640-\u2642"
+    "\u2600-\u2B55"
+    "\u200d"
+    "\u23cf"
+    "\u23e9"
+    "\u231a"
+    "\ufe0f"  # dingbats
+    "\u3030"
+    "]+",
+    re.UNICODE,
+)
 
 
 # hide and show cursor functions from colorama
@@ -82,6 +106,8 @@ class UsefulFormatter(logging.Formatter):
         }
         log_fmt = formats.get(record.levelno)
         fmt = logging.Formatter(log_fmt, self.dt_fmt, style="%")
+        if not self.colored_output:
+            record.msg = emoji_pattern.sub("", record.msg)
         return fmt.format(record)
 
 
