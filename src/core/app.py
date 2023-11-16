@@ -5,7 +5,7 @@ from configparser import ConfigParser
 from multiprocessing.pool import ThreadPool
 
 import requests
-from alive_progress import alive_it
+from alive_progress import alive_bar
 
 from ..generator import PasswdGenerator
 from ..onion import TorProxy
@@ -79,18 +79,16 @@ class App:
                 "http": f"socks5h://localhost:{tor.port}",  # use Tor for HTTP connections
             }
 
-            with ThreadPool(self.N_PROCESS) as pool:
-                for i, u in enumerate(user()):
-                    for _ in alive_it(
-                        pool.imap_unordered(
+            with alive_bar(total=user.count * passwd.count, title=f"on user {1:0{digits}}/{user.count}") as bar:
+                with ThreadPool(self.N_PROCESS) as pool:
+                    for i, u in enumerate(user()):
+                        for _ in pool.imap_unordered(
                             lambda p: self.post_search(u, p[:]),  # noqa
                             passwd(),  # todo: faster gen after 1st time
-                        ),
-                        passwd.count,
-                        title=f"on user n° {(i+1):0{digits}}/{user.count}",
-                    ):
-                        ...
+                        ):
+                            bar()
 
-                    tor.identity_swap()
+                        tor.identity_swap()
+                        bar.title(f"on user {(i+2):0{digits}}/{user.count}")
 
         self.logger.info("Done ✅")
