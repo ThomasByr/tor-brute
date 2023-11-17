@@ -5,13 +5,17 @@ import sys
 import requests
 import stem.control as stc
 import stem.process as stp
+from requests.exceptions import ConnectionError, Timeout
 
 __all__ = ["TorProxy"]
 
 
 class TorProxy:
+    MAX_TRIES = 3
+
     def __init__(self) -> None:
         self.logger = logging.getLogger(".".join(__name__.split(".")[1:]))
+        self.__consecutive_fails = 0
         self.__consecutive_exit_node_change_failures = 0
         self.__port = 9050
         self.__tor_process = None
@@ -55,18 +59,41 @@ class TorProxy:
     @property
     def ip(self) -> str:
         """Return the current ip used by the Tor service"""
+        response: requests.Response = None
+        try_no = 0
+
         with requests.Session() as session:
-            session.proxies = {
-                "http": f"socks5h://localhost:{self.port}",  # Use Tor for HTTP connections
-            }
-            # http://httpbin.org/ip returns a json like:
-            # b'{\n  "origin": "<IP>"\n}\n'
-            try:
-                r = session.get("http://httpbin.org/ip", timeout=10).text
-            except ConnectionError:
-                self.logger.error("failed to request httpbin.org, skipping 🔍")
-                return None
-            return r.split("\n")[1].split('"')[3]
+            while try_no < self.MAX_TRIES and (
+                not response or response.status_code != 200
+            ):
+                session.proxies = {
+                    "http": f"socks5h://localhost:{self.port}",  # Use Tor for HTTP connections
+                }
+                # http://httpbin.org/ip returns a json like:
+                # b'{\n  "origin": "<IP>"\n}\n'
+                try:
+                    response = session.get("http://httpbin.org/ip", timeout=10)
+                    if response and response.status_code == 200:
+                        self.__consecutive_fails = 0
+                except (ConnectionError, Timeout):
+                    self.logger.debug(
+                        "failed to request httpbin.org, skipping (%d/%d) 🔍",
+                        try_no,
+                        self.MAX_TRIES,
+                    )
+                finally:
+                    try_no += 1
+            else:
+                if not response or response.status_code != 200:
+                    self.logger.error(
+                        "failed multiple reconnect to httpbin.org (%d/%d) ❌",
+                        self.__consecutive_fails,
+                        self.MAX_TRIES,
+                    )
+                    if self.__consecutive_fails >= self.MAX_TRIES:
+                        self.logger.critical()
+                    return None
+            return response.text.split("\n")[1].split('"')[3]
 
     def identity_swap(self) -> None:
         """Change the Tor identity"""
@@ -80,8 +107,12 @@ class TorProxy:
             self.logger.debug("exit node %s -> %s ♻️", ip_before, ip_after)
             if ip_before == ip_after:
                 self.__consecutive_exit_node_change_failures += 1
-                self.logger.warning("Tor exit node did not change while id swap 🥷")
-                if self.__consecutive_exit_node_change_failures >= 3:
+                self.logger.warning(
+                    "Tor exit node did not change while id swap (%d/%d) 🥷",
+                    self.__consecutive_exit_node_change_failures,
+                    self.MAX_TRIES,
+                )
+                if self.__consecutive_exit_node_change_failures >= self.MAX_TRIES:
                     self.logger.critical(
                         "too many consecutive exit node change failures, exiting ... ❌"
                     )
