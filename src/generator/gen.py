@@ -1,5 +1,5 @@
 import logging
-from itertools import combinations
+from itertools import combinations, product
 from math import comb, prod
 from typing import Generator
 
@@ -19,7 +19,7 @@ class PasswdGenerator:
         # bellow is NOT executed if not debug
         self.logger.debug("[*] %s loaded with %d elements", filepath, self.count)
 
-    def __call__(self) -> Generator[str, None, None]:
+    def __iter__(self) -> Generator[str, None, None]:
         """yields all possible combinations of the chunks"""
         for i in range(1, self.max_cmb_len + 1):
             for combination in combinations(self.chunks, i):
@@ -51,12 +51,19 @@ class TupleGenerator:
             self.count,
         )
 
-    def __call__(self) -> Generator[tuple[str, ...], None, None]:
-        """yields all possible combinations of the generators chunks"""
-        for combination in combinations(self.generators, len(self.generators)):
-            for i in combination[0]():
-                for j in combination[1]():
-                    yield (i, j)
+    def __iter__(self) -> Generator[tuple[str, ...], None, None]:
+        """yields all possible combinations of the products of the generators"""
+        # consume all the generators
+        # consume last one, then call one element from the previous one
+        # until the first one
+        # and so on ...
+        # example:
+        #   g1 : a, b, c
+        #   g2 : d, e, f
+        #   g3 : g, h, i
+        #   result : (a, d, g), (a, d, h), (a, d, i), (a, e, g), (a, e, h), ...
+        for combination in product(*self.generators):
+            yield combination
 
     @property
     def count(self) -> int:
