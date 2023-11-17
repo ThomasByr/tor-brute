@@ -122,7 +122,9 @@ def check_args(args: Namespace) -> Args:
         a.it_comb = args.it_comb
     if args.each is not None:
         if args.each < MINIMUM_EACH_VALUE:
-            raise ValueError("[--each] value must be at least >= %d", MINIMUM_EACH_VALUE)
+            raise ValueError(
+                "[--each] value must be at least >= %d", MINIMUM_EACH_VALUE
+            )
         a.each = args.each
     if args.debug:
         a.debug = args.debug
