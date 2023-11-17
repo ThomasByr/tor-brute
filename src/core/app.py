@@ -130,7 +130,7 @@ class App:
     def run(self):
         user = PasswdGenerator(self.username_path, self.it_comb[0])
         passwd = PasswdGenerator(self.password_path, self.it_comb[1])
-        g = TupleGenerator(user, passwd)
+        generator = TupleGenerator(user, passwd)
 
         digits = len(str(user.count))  # number of digits in user count
         length = len(self.bar_title(0, digits, user.count))
@@ -141,9 +141,9 @@ class App:
                 "http": f"socks5h://localhost:{tor.port}",  # use Tor for HTTP connections
             }
 
-            with alive_bar(total=g.count) as bar:
+            with alive_bar(total=generator.count) as bar:
                 with ThreadPool(self.N_PROCESS) as pool:
-                    for i, u in enumerate(g()):
+                    for i, u in enumerate(generator):
                         if i % self.each == 0:
                             pool.close()
                             pool.join()
