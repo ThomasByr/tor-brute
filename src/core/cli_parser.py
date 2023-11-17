@@ -105,6 +105,7 @@ def parser() -> WeakParser:
 
 
 def check_args(args: Namespace) -> Args:
+    MINIMUM_EACH_VALUE = 100
     a = Args()
 
     # paths (and read property) are checked by the ArgParser
@@ -117,11 +118,11 @@ def check_args(args: Namespace) -> Args:
 
     if args.it_comb is not None:
         if any(i < 1 for i in args.it_comb):
-            raise ValueError("it_comb values must be >= 1")
+            raise ValueError("[--iter] values must be >= 1")
         a.it_comb = args.it_comb
     if args.each is not None:
-        if args.each < 10:
-            raise ValueError("each value must be at least >= 10")
+        if args.each < MINIMUM_EACH_VALUE:
+            raise ValueError("[--each] value must be at least >= %d", MINIMUM_EACH_VALUE)
         a.each = args.each
     if args.debug:
         a.debug = args.debug
