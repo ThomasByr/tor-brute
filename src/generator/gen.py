@@ -1,9 +1,9 @@
 import logging
 from itertools import combinations
-from math import comb
+from math import comb, prod
 from typing import Generator
 
-__all__ = ["PasswdGenerator"]
+__all__ = ["PasswdGenerator", "TupleGenerator"]
 
 
 class PasswdGenerator:
@@ -34,4 +34,33 @@ class PasswdGenerator:
             self.__count = sum(
                 comb(len(self.chunks), i) for i in range(1, self.max_cmb_len + 1)
             )
+        return self.__count
+
+
+class TupleGenerator:
+    def __init__(self, *generators: PasswdGenerator) -> None:
+        self.generators = generators
+        self.__count: int = None
+
+        self.logger = logging.getLogger(".".join(__name__.split(".")[1:]))
+
+        # bellow is NOT executed if not debug
+        self.logger.debug(
+            "[*] %s loaded with %d elements",
+            self.__class__.__name__,
+            self.count,
+        )
+
+    def __call__(self) -> Generator[tuple[str, ...], None, None]:
+        """yields all possible combinations of the generators chunks"""
+        for combination in combinations(self.generators, len(self.generators)):
+            for i in combination[0]():
+                for j in combination[1]():
+                    yield (i, j)
+
+    @property
+    def count(self) -> int:
+        """return the number of possible combinations (cached)"""
+        if not self.__count:
+            self.__count = prod(g.count for g in self.generators)
         return self.__count
