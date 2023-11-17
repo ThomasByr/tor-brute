@@ -10,3 +10,25 @@
 - create a cli
 - unique progression bar for all users (so this is not spammy)
 - removed color and emotes from streams that don't support it
+
+**v0.2** misc refactors
+
+- use `argparse` instead of `sys.argv`
+- better formula to count combinations
+- beautify code and error messages/handling
+- account for `ReadTimeout` in `requests` (and other errors)
+- account for ip check failure, successive failures, and exit node unchanged
+- `logging.critical` sends SIGTERM to all threads and shows cursor back
+  
+## first release
+
+**v1.0** beta candidate (a.k.a. dev)
+
+- add option to change Tor ID each X requests
+- new `TupleGenerator` that yields products of conbinations
+- renew http session each Tor ID swap
+- `ThreadPool` is not closed/joined/terminated/deleted and then recreated anymore ! we use POSIX condition variables !
+- somehow improved performance by 6.9% (not sure how)
+- RAM usage does not seem to increase anymore (to be confirmed)
+- consistent naming for variables and files
+- next up: beta, release candidate, and release (drastic changes should only happen between beta and release candidate)
