@@ -87,15 +87,16 @@ username_or_password_part_3
 
 <!-- markdownlint-disable MD051 -->
 
-| argument         | hint                                  | default             |
-| ---------------- | ------------------------------------- | ------------------- |
-| `--help`         | show help message and exit            |                     |
-| `--version`      | show program's version                |                     |
-| `--debug`        | debug mode                            | `False`             |
-| `--config`       | path to the config file               | `.cfg`              |
-| `--users`        | path to the usernames file            | `assets/users.txt`  |
-| `--passwd`       | path to the passwords file            | `assets/passwd.txt` |
-| `--iter` [\*][1] | number of combination for user/passwd | `3, 2`              |
+| argument         | hint                                       | default             |
+| ---------------- | ------------------------------------------ | ------------------- |
+| `--help`         | show help message and exit                 |                     |
+| `--version`      | show program's version                     |                     |
+| `--debug`        | debug mode                                 | `False`             |
+| `--config`       | path to the config file                    | `.cfg`              |
+| `--user`         | path to the usernames file                 | `assets/user.txt`   |
+| `--passwd`       | path to the passwords file                 | `assets/passwd.txt` |
+| `--iter` [\*][1] | number of combination for user/passwd      | `3, 2`              |
+| `--each`         | change Tor ID each X requests (0 or >=100) | `1000`              |
 
 [1]: ## "a file with a, b, c with iter=2 would produce a, b, c, ab, ac, ba, bc, ca, cb"
 
@@ -166,14 +167,18 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Please read the [changelog](changelog.md) file for the full history !
 
 <details>
-  <summary>  alpha (click here to expand) </summary>
+  <summary>  first release (click here to expand) </summary>
 
-**v0.1** first public release
+**v1.0** beta candidate (a.k.a. dev)
 
-- use threads
-- create a cli
-- unique progression bar for all users (so this is not spammy)
-- removed color and emotes from streams that don't support it
+- add option to change Tor ID each X requests
+- new `TupleGenerator` that yields products of conbinations
+- renew http session each Tor ID swap
+- `ThreadPool` is not closed/joined/terminated/deleted and then recreated anymore ! we use POSIX condition variables !
+- somehow improved performance by 6.9% (not sure how)
+- RAM usage does not seem to increase anymore (to be confirmed)
+- consistent naming for variables and files
+- next up: beta, release candidate, and release (drastic changes should only happen between beta and release candidate)
 
 </details>
 
@@ -183,7 +188,9 @@ Please read the [changelog](changelog.md) file for the full history !
 
 - [x] add a simple cli (0.1.1)
 - [ ] option to not use tor (?)
-- [ ] option to change Tor ID each X requests (would need to implement a catch-up mechanism because thread jobs are unordered)
+- [x] option to change Tor ID each X requests (would need to implement a catch-up mechanism because thread jobs are unordered) (v1.0.0)
+- [ ] option to use a running tor instance/service
+- [ ] choose protocol (http, https, ssh, etc.)
 
 **Known Bugs** (latest fix)
 
