@@ -41,17 +41,15 @@ if sys.version_info < (3, 8):
 
 
 import logging
-from stem.util.log import get_logger
 
-from termcolor import colored
 from alive_progress import config_handler
 from alive_progress.animations.bars import bar_factory
 from alive_progress.animations.spinners import frame_spinner_factory
+from stem.util.log import get_logger
+from termcolor import colored
 
+from src.core import App, check_args, parser
 from src.helper.logger import init_logger
-from src.core.cli_parser import parser, check_args
-from src.core.app import App
-
 
 if __name__ == "__main__":
     args = check_args(parser())
