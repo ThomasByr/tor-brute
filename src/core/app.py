@@ -157,6 +157,7 @@ class App:
         self.logger.info("Starting Tor 🧄 session ...")
 
         def on_each():
+            """setup session and bar title"""
             self.rebuild_session(tor.port)
             bar.title(self.bar_title(self.count // passwd.count, digits, user.count))
 
@@ -165,12 +166,13 @@ class App:
             alive_bar(generator.count) as bar,\
             ThreadPool(self.N_PROCESS) as pool:  # fmt: on
 
-            if self.each == 0:
+            if self.each == 0:  # initially setup session and bar title
                 on_each()
 
             for i, u in enumerate(generator):
                 if self.each > 0 and i % self.each == 0:
                     if i > 0:  # skip 1st time
+                        self.logger.debug("waiting for last job to finish")
                         with self.cond:  # wait for last job to finish
                             self.cond.wait()
 

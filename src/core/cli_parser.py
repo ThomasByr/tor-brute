@@ -13,7 +13,7 @@ __all__ = ["Args", "parser", "check_args"]
 class Args:
     cfg_path: str = ".cfg"
     debug: bool = False
-    usernames: str = "assets/users.txt"
+    usernames: str = "assets/user.txt"
     passwords: str = "assets/passwd.txt"
     it_comb: tuple[int, int] = (3, 2)
     each: int = 1000
@@ -47,7 +47,7 @@ def parse_it_comb(it_comb: str) -> tuple[int, int]:
         return (int(parts[0]), int(parts[0]))
     elif len(parts) == 2:
         return (int(parts[0]), int(parts[1]))
-    raise ValueError("invalid it_comb value")
+    return  # leave blank since argparse does not reraise
 
 
 def parser() -> WeakParser:
@@ -72,13 +72,13 @@ def parser() -> WeakParser:
             "-u",
             "--user",
             dest="usernames",
-            help="Path to the usernames text file",
+            help="Path to the usernames text file (one username-part per line))",
         )
         .add_path_argument(
             "-p",
             "--passwd",
             dest="passwords",
-            help="Path to the passwords text file",
+            help="Path to the passwords text file (one password-part per line)",
         )
         .add_argument(
             "-i",
