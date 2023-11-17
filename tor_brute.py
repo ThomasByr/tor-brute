@@ -52,7 +52,7 @@ from src.core import App, check_args, parser
 from src.helper.logger import init_logger
 
 if __name__ == "__main__":
-    args = check_args(parser())
+    args = check_args(parser().parse_args())
     supports_color = init_logger(logging.DEBUG if args.debug else logging.INFO)
 
     # https://stackoverflow.com/a/46400076/13708995
