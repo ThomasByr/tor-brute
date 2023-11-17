@@ -2,7 +2,7 @@ import logging
 import re
 import time
 from configparser import ConfigParser
-from multiprocessing import Lock
+from multiprocessing import Lock, Condition
 from multiprocessing.pool import ThreadPool
 
 import requests
@@ -23,6 +23,7 @@ class App:
     def __init__(self, args: Args) -> None:
         self.consecutive_fails = 0
         self.lock = Lock()
+        self.cond = Condition()
 
         self.count = 0
         self.count_lock = Lock()
@@ -31,7 +32,7 @@ class App:
         self.cfg = ConfigParser()
         self.cfg.read(args.cfg_path)
 
-        self.session = requests.Session()
+        self.session: requests.Session = None
         self.target = re.compile(self.cfg["url-endpoints"]["target"])
         self.post_url = self.cfg["url-endpoints"]["post_url"]
 
@@ -42,6 +43,12 @@ class App:
         self.password_path = args.passwords
         self.it_comb = args.it_comb
         self.each = args.each
+
+    def __del__(self) -> None:
+        try:
+            self.session.close()
+        except:  # noqa
+            pass
 
     def post_search(self, username_field: str, password_field: str) -> bool:
         self.session.cookies.clear_session_cookies()  # todo: benchmark against .clear()
@@ -95,12 +102,24 @@ class App:
                 password_field,
             )
 
+    def rebuild_session(self, port: int):
+        if self.session:
+            self.session.close()
+            del self.session
+        self.session = requests.Session()
+        self.session.proxies = {
+            "http": f"socks5h://localhost:{port}",  # use Tor for HTTP connections
+        }
+
     def bar(self, bar, digits: int, user_count: int, passwd_count: int, /):
-        should_update_title = False
-        with self.count_lock:
+        should_update_title = False  # do we change user ?
+        with self.count_lock:  # protect self.count against all threads
             self.count += 1
             if self.count % passwd_count == 0:
                 should_update_title = True
+            if self.each > 0 and self.count % self.each == 0:  # last thread
+                with self.cond:  # notify main thread
+                    self.cond.notify(1)
 
         if should_update_title:
             bar.title(self.bar_title(self.count // passwd_count, digits, user_count))
@@ -136,36 +155,41 @@ class App:
         length = len(self.bar_title(0, digits, user.count))
 
         self.logger.info("Starting Tor 🧄 session ...")
-        with TorProxy() as tor:
-            self.session.proxies = {
-                "http": f"socks5h://localhost:{tor.port}",  # use Tor for HTTP connections
-            }
 
-            with alive_bar(total=generator.count) as bar:
-                with ThreadPool(self.N_PROCESS) as pool:
-                    for i, u in enumerate(generator):
-                        if i % self.each == 0:
-                            pool.close()
-                            pool.join()
-                            bar.title(f"ID Swap ♻️{' '*(length-9)}")
-                            tor.identity_swap()
-                            # alternative would be to manually terminate and create a new pool
-                            # without the "with" statement
-                            pool.__init__(self.N_PROCESS)
-                            bar.title(
-                                self.bar_title(
-                                    self.count // passwd.count, digits, user.count
-                                )
-                            )
+        def on_each():
+            self.rebuild_session(tor.port)
+            bar.title(self.bar_title(self.count // passwd.count, digits, user.count))
 
-                        pool.apply_async(
-                            self.post_search,
-                            args=(u[0], u[1]),
-                            callback=lambda _: self.bar(
-                                bar, digits, user.count, passwd.count
-                            ),
-                        )
-                    pool.close()
-                    pool.join()
+        # fmt: off
+        with TorProxy() as tor,\
+            alive_bar(generator.count) as bar,\
+            ThreadPool(self.N_PROCESS) as pool:  # fmt: on
+
+            if self.each == 0:
+                on_each()
+
+            for i, u in enumerate(generator):
+                if self.each > 0 and i % self.each == 0:
+                    if i > 0:  # skip 1st time
+                        with self.cond:  # wait for last job to finish
+                            self.cond.wait()
+
+                        # swap Tor identity
+                        bar.title(
+                            f"ID Swap ♻️{' '*(length-9)}"
+                        )  # 9 = len("ID Swap ♻️")
+                        tor.identity_swap()
+
+                    on_each()
+
+                # apply new tasks to thread pool
+                pool.apply_async(
+                    self.post_search,
+                    args=(u[0], u[1]),
+                    callback=lambda _: self.bar(bar, digits, user.count, passwd.count),
+                )
+            pool.close()
+            pool.join()
 
         self.logger.info("Done ✅")
+        self.session.close()
