@@ -1,6 +1,7 @@
 import logging
 import signal
 import sys
+import time
 
 import requests
 import stem.control as stc
@@ -63,24 +64,29 @@ class TorProxy:
         try_no = 0
 
         with requests.Session() as session:
+            session.proxies = {
+                "http": f"socks5h://localhost:{self.port}",  # use Tor for HTTP connections
+            }
+
+            # 3 tries to connect to the target
+            # connected if some response and status code is 200
             while try_no < self.MAX_TRIES and (
                 not response or response.status_code != 200
             ):
-                session.proxies = {
-                    "http": f"socks5h://localhost:{self.port}",  # Use Tor for HTTP connections
-                }
                 # http://httpbin.org/ip returns a json like:
                 # b'{\n  "origin": "<IP>"\n}\n'
                 try:
                     response = session.get("http://httpbin.org/ip", timeout=10)
                     if response and response.status_code == 200:
                         self.__consecutive_fails = 0
-                except (ConnectionError, Timeout):
+                except (ConnectionError, Timeout) as e:
                     self.logger.debug(
-                        "failed to request httpbin.org, skipping (%d/%d) 🔍",
-                        try_no,
+                        "exception [%s] : retrying ... (%d/%d)",
+                        e.__class__.__name__,
+                        try_no + 1,
                         self.MAX_TRIES,
                     )
+                    time.sleep(1)  # wait to ~avoid~ spamming
                 finally:
                     try_no += 1
             else:
@@ -91,9 +97,11 @@ class TorProxy:
                         self.MAX_TRIES,
                     )
                     if self.__consecutive_fails >= self.MAX_TRIES:
-                        self.logger.critical()
+                        self.logger.critical(
+                            "too many consecutive fails, exiting ... ❌"
+                        )
                     return None
-            return response.text.split("\n")[1].split('"')[3]
+        return response.text.split("\n")[1].split('"')[3]
 
     def identity_swap(self) -> None:
         """Change the Tor identity"""
