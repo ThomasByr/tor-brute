@@ -121,7 +121,7 @@ def check_args(args: Namespace) -> Args:
             raise ValueError("[--iter] values must be >= 1")
         a.it_comb = args.it_comb
     if args.each is not None:
-        if args.each < MINIMUM_EACH_VALUE:
+        if 0 < args.each < MINIMUM_EACH_VALUE:
             raise ValueError(
                 "[--each] value must be at least >= %d", MINIMUM_EACH_VALUE
             )
