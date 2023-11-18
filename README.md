@@ -42,6 +42,8 @@ First, install the dependencies :
 sudo apt-get update
 sudo apt-get install tor
 sudo service tor stop  # the app will start its own tor instance
+# or
+# sudo systemctl disable tor
 ```
 
 Then clone the repository and cd into it :
@@ -64,26 +66,38 @@ Finally, run the app in the background with `nohup` and `tee` :
 
 ```bash
 # Runs the app in the background
-nohup python tor-brute.py 2>&1 | tee -a .log &
+nohup python tor_brute.py 2>&1 | tee -a .log &
 ```
 
 or in the foreground :
 
 ```bash
 # Runs the app (lets you Ctrl+C to stop it)
-python tor-brute.py
+python tor_brute.py
 ```
 
 ## 🔧 Usage
 
-Simply create a `.cfg` file from [.cfg.example](.cfg.example) and fill it, then provide text files for both usernames and passwords. The app will try every combination of usernames and passwords, and will issue a log record for each successful login.
+Simply create a `.cfg` file from [.cfg.example](.cfg.example) and fill it, then provide text files for both usernames and passwords. The app will try every combination of usernames and passwords, and will issue a log record for each successful login. If you have a user file that looks like this :
 
 ```txt
-username_or_password_part_1
-username_or_password_part_2
-username_or_password_part_3
-...
+foo
+bar
+baz
 ```
+
+The app will try these usernames (for combinations of size 2) :
+
+```txt
+foo
+bar
+baz
+foobar
+foobaz
+barbaz
+```
+
+and for each one, try every password combination in the password file following the same logic.
 
 <!-- markdownlint-disable MD051 -->
 
@@ -97,6 +111,7 @@ username_or_password_part_3
 | `--passwd`       | path to the passwords file                 | `assets/passwd.txt` |
 | `--iter` [\*][1] | number of combination for user/passwd      | `3, 2`              |
 | `--each`         | change Tor ID each X requests (0 or >=100) | `1000`              |
+| `--timeout`      | timeout for http requests                  | `10`                |
 
 [1]: ## "a file with a, b, c with iter=2 would produce a, b, c, ab, ac, ba, bc, ca, cb"
 
@@ -191,6 +206,7 @@ Please read the [changelog](changelog.md) file for the full history !
 - [x] option to change Tor ID each X requests (would need to implement a catch-up mechanism because thread jobs are unordered) (v1.0.0)
 - [ ] option to use a running tor instance/service
 - [ ] choose protocol (http, https, ssh, etc.)
+- [ ] dynamic change between `combinations` and `combinations_with_replacement`
 
 **Known Bugs** (latest fix)
 
