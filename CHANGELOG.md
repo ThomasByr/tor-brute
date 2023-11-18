@@ -32,3 +32,12 @@
 - RAM usage does not seem to increase anymore (to be confirmed)
 - consistent naming for variables and files
 - next up: beta, release candidate, and release (drastic changes should only happen between beta and release candidate)
+
+**v1.0** beta candidate (1.0.0-beta.1)
+
+- `-t` for timeout, the maximum number of seconds to wait for one request
+- `-m` for max retries, the maximum number of retries for one request, as well as the maximum number of consecutive failures before shutting down
+- `-w` for workers of threads, pretty self-explanatory
+- `-s` for sleep, the amount of seconds to wait between each Tor ID swap
+- `-a` for use_all or all, to use permutations instead of combinations in generators
+- each worker has its own session (no more shared session) and is renewed each Tor ID swap
