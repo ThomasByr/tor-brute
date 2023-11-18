@@ -1,15 +1,18 @@
 import logging
-from itertools import combinations, product
-from math import comb, prod
+from itertools import combinations, permutations, product
+from math import comb, perm, prod
 from typing import Generator
 
 __all__ = ["PasswdGenerator", "TupleGenerator"]
 
 
 class PasswdGenerator:
-    def __init__(self, filepath: str = "assets/passwd.txt", max_cmb_len=2) -> None:
+    def __init__(self, filepath: str = "assets/passwd.txt", max_cmb_len=2, do_all: bool = False) -> None:
         self.__count: int = None
         self.logger = logging.getLogger(".".join(__name__.split(".")[1:]))
+
+        self.__f = permutations if do_all else combinations
+        self.__c = perm if do_all else comb
 
         self.max_cmb_len = max_cmb_len
         self.filepath = filepath
@@ -22,7 +25,7 @@ class PasswdGenerator:
     def __iter__(self) -> Generator[str, None, None]:
         """yields all possible combinations of the chunks"""
         for i in range(1, self.max_cmb_len + 1):
-            for combination in combinations(self.chunks, i):
+            for combination in self.__f(self.chunks, i):
                 yield "".join(combination).lower()
 
     @property
@@ -31,7 +34,7 @@ class PasswdGenerator:
         # a, b, c will result in a, b, c, ab, ac, bc, abc
         # all the way until the max_cmb_len
         if not self.__count:
-            self.__count = sum(comb(len(self.chunks), i) for i in range(1, self.max_cmb_len + 1))
+            self.__count = sum(self.__c(len(self.chunks), i) for i in range(1, self.max_cmb_len + 1))
         return self.__count
 
 
