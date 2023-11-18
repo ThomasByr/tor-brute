@@ -12,10 +12,12 @@ __all__ = ["TorProxy"]
 
 
 class TorProxy:
-    MAX_TRIES = 3
-
-    def __init__(self) -> None:
+    def __init__(self, timeout: int = 10, max_tries: int = 3) -> None:
         self.logger = logging.getLogger(".".join(__name__.split(".")[1:]))
+
+        self.timeout = timeout
+        self.max_tries = max_tries
+
         self.__consecutive_fails = 0
         self.__consecutive_exit_node_change_failures = 0
         self.__port = 9050
@@ -26,19 +28,20 @@ class TorProxy:
 
     def __enter__(self) -> "TorProxy":
         # Start the Tor service
+        self.logger.info("starting Tor 🧄 service ...")
         try:
             self.__tor_process = stp.launch_tor_with_config(
                 config={
                     "SocksPort": str(self.port),
                     "ControlPort": "9051",
+                    # only countries with good internet and no censorship
+                    "ExitNodes": "{us}, {ca}, {gb}, {fr}, {de}, {it}, {es}",
                     # beautiful password
                     "HashedControlPassword": "16:E600ADC1B52C80BB6022A0E999A7734571A451EB6AE50FED489B72E3DF",
                 },
             )
         except OSError as e:
-            self.logger.critical(
-                "failed to start Tor service (maybe stop service ?) ❌\n%s", e
-            )
+            self.logger.critical("failed to start Tor service (maybe stop service ?) ❌\n%s", e)
         return self
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:  # noqa
@@ -47,9 +50,7 @@ class TorProxy:
     def __on_end(self, signum, frame):  # noqa
         if self.__tor_process:
             self.__tor_process.kill()
-        self.logger.warning(
-            "Received signal %s, exiting ...", signal.Signals(signum).name
-        )
+        self.logger.warning("Received signal %s, exiting ...", signal.Signals(signum).name)
         sys.exit(0)
 
     @property
@@ -70,9 +71,7 @@ class TorProxy:
 
             # 3 tries to connect to the target
             # connected if some response and status code is 200
-            while try_no < self.MAX_TRIES and (
-                not response or response.status_code != 200
-            ):
+            while try_no < self.max_tries and (not response or response.status_code != 200):
                 # http://httpbin.org/ip returns a json like:
                 # b'{\n  "origin": "<IP>"\n}\n'
                 try:
@@ -84,7 +83,7 @@ class TorProxy:
                         "exception [%s] : retrying ... (%d/%d)",
                         e.__class__.__name__,
                         try_no + 1,
-                        self.MAX_TRIES,
+                        self.max_tries,
                     )
                     time.sleep(1)  # wait to ~avoid~ spamming
                 finally:
@@ -94,12 +93,10 @@ class TorProxy:
                     self.logger.error(
                         "failed multiple reconnect to httpbin.org (%d/%d) ❌",
                         self.__consecutive_fails,
-                        self.MAX_TRIES,
+                        self.max_tries,
                     )
-                    if self.__consecutive_fails >= self.MAX_TRIES:
-                        self.logger.critical(
-                            "too many consecutive fails, exiting ... ❌"
-                        )
+                    if self.__consecutive_fails >= self.max_tries:
+                        self.logger.critical("too many consecutive fails, exiting ... ❌")
                     return None
         return response.text.split("\n")[1].split('"')[3]
 
@@ -118,11 +115,9 @@ class TorProxy:
                 self.logger.warning(
                     "Tor exit node did not change while id swap (%d/%d) 🥷",
                     self.__consecutive_exit_node_change_failures,
-                    self.MAX_TRIES,
+                    self.max_tries,
                 )
-                if self.__consecutive_exit_node_change_failures >= self.MAX_TRIES:
-                    self.logger.critical(
-                        "too many consecutive exit node change failures, exiting ... ❌"
-                    )
+                if self.__consecutive_exit_node_change_failures >= self.max_tries:
+                    self.logger.critical("too many consecutive exit node change failures, exiting ... ❌")
             else:
                 self.__consecutive_exit_node_change_failures = 0
