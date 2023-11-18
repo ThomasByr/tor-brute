@@ -20,6 +20,8 @@ class Args:
     timeout: int = 10
     max_tries: int = 3
     threads: int = 50
+    sleep: int = 0
+    use_all: bool = False
 
 
 class WeakParser(ArgumentParser):
@@ -115,6 +117,19 @@ def parser() -> WeakParser:
             dest="threads",
             help="how much threads to use (default: 50)",
         )
+        .add_int_argument(
+            "-s",
+            "--sleep",
+            dest="sleep",
+            help="how much to sleep between each Tor identity swap (default: 0)",
+        )
+        .add_argument(
+            "-a",
+            "--all",
+            dest="use_all",
+            action="store_true",
+            help="use all the possible permutations instead of the faster unordered classic (default: False)",
+        )
         .add_argument(
             "-d",
             "--debug",
@@ -165,6 +180,12 @@ def check_args(args: Namespace) -> Args:
         if args.threads < 1:
             raise ValueError("[--threads] value must be >= 1")
         a.threads = args.threads
+    if args.sleep is not None:
+        if args.sleep < 0:
+            raise ValueError("[--sleep] value must be >= 0")
+        a.sleep = args.sleep
+    if args.use_all is not None:
+        a.use_all = args.use_all
     if args.debug:
         a.debug = args.debug
     return a
