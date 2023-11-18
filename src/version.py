@@ -43,4 +43,4 @@
 # 'development' version, labeled 'dev'.
 
 # Example, '0.4.0-dev'
-__version__ = "1.0.0-dev"
+__version__ = "1.0.1-beta.1"
