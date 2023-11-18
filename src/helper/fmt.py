@@ -100,9 +100,7 @@ class UsefulFormatter(logging.Formatter):
             logging.INFO: formatter("blue", self.colored_output, self.name_width),
             logging.WARNING: formatter("yellow", self.colored_output, self.name_width),
             logging.ERROR: formatter("red", self.colored_output, self.name_width),
-            logging.CRITICAL: formatter(
-                "red", self.colored_output, self.name_width, ["bold"]
-            ),
+            logging.CRITICAL: formatter("red", self.colored_output, self.name_width, ["bold"]),
         }
         log_fmt = formats.get(record.levelno)
         fmt = logging.Formatter(log_fmt, self.dt_fmt, style="%")

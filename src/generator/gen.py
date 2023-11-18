@@ -31,9 +31,7 @@ class PasswdGenerator:
         # a, b, c will result in a, b, c, ab, ac, bc, abc
         # all the way until the max_cmb_len
         if not self.__count:
-            self.__count = sum(
-                comb(len(self.chunks), i) for i in range(1, self.max_cmb_len + 1)
-            )
+            self.__count = sum(comb(len(self.chunks), i) for i in range(1, self.max_cmb_len + 1))
         return self.__count
 
 
