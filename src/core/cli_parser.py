@@ -1,4 +1,4 @@
-from argparse import ArgumentParser, FileType, Namespace
+from argparse import ArgumentParser, Namespace
 from dataclasses import dataclass
 from typing import Any
 
@@ -17,6 +17,9 @@ class Args:
     passwords: str = "assets/passwd.txt"
     it_comb: tuple[int, int] = (3, 2)
     each: int = 1000
+    timeout: int = 10
+    max_tries: int = 3
+    threads: int = 50
 
 
 class WeakParser(ArgumentParser):
@@ -28,7 +31,7 @@ class WeakParser(ArgumentParser):
 
     def add_path_argument(self, *args: Any, **kwargs: Any) -> "WeakParser":
         kwargs["metavar"] = "P"
-        kwargs["type"] = FileType("r")
+        kwargs["type"] = str
         super().add_argument(*args, **kwargs)
         return self
 
@@ -94,6 +97,24 @@ def parser() -> WeakParser:
             dest="each",
             help="each how many requests to change the Tor identity (default: 1000)",
         )
+        .add_int_argument(
+            "-t",
+            "--timeout",
+            dest="timeout",
+            help="how much to wait for a response in seconds (default: 10)",
+        )
+        .add_int_argument(
+            "-m",
+            "--max-tries",
+            dest="max_tries",
+            help="how much to try to reconnect to the target and how many consecutive fail to consider before killing the app (default: 3)",
+        )
+        .add_int_argument(
+            "-w",
+            "--threads",
+            dest="threads",
+            help="how much threads to use (default: 50)",
+        )
         .add_argument(
             "-d",
             "--debug",
@@ -104,17 +125,25 @@ def parser() -> WeakParser:
     )
 
 
+def check_path(path: str, mode: str = "r") -> str:
+    try:
+        with open(path, mode, encoding="utf-8"):
+            return path
+    except FileNotFoundError as e:
+        raise ValueError(f"file {path} does not exist") from e
+
+
 def check_args(args: Namespace) -> Args:
     MINIMUM_EACH_VALUE = 100
     a = Args()
 
     # paths (and read property) are checked by the ArgParser
     if args.cfg_path is not None:
-        a.cfg_path = args.cfg_path
+        a.cfg_path = check_path(args.cfg_path)
     if args.usernames is not None:
-        a.usernames = args.usernames
+        a.usernames = check_path(args.usernames)
     if args.passwords is not None:
-        a.passwords = args.passwords
+        a.passwords = check_path(args.passwords)
 
     if args.it_comb is not None:
         if any(i < 1 for i in args.it_comb):
@@ -122,10 +151,20 @@ def check_args(args: Namespace) -> Args:
         a.it_comb = args.it_comb
     if args.each is not None:
         if 0 < args.each < MINIMUM_EACH_VALUE:
-            raise ValueError(
-                "[--each] value must be at least >= %d", MINIMUM_EACH_VALUE
-            )
+            raise ValueError("[--each] value must be at least >= %d", MINIMUM_EACH_VALUE)
         a.each = args.each
+    if args.timeout is not None:
+        if args.timeout < 1:
+            raise ValueError("[--timeout] value must be >= 1")
+        a.timeout = args.timeout
+    if args.max_tries is not None:
+        if args.max_tries < 1:
+            raise ValueError("[--max-tries] value must be >= 1")
+        a.max_tries = args.max_tries
+    if args.threads is not None:
+        if args.threads < 1:
+            raise ValueError("[--threads] value must be >= 1")
+        a.threads = args.threads
     if args.debug:
         a.debug = args.debug
     return a
