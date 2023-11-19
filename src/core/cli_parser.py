@@ -141,18 +141,27 @@ def parser() -> WeakParser:
 
 
 def check_path(path: str, mode: str = "r") -> str:
+    """Check if the path exists"""
     try:
         with open(path, mode, encoding="utf-8"):
             return path
     except FileNotFoundError as e:
         raise ValueError(f"file {path} does not exist") from e
+    except PermissionError as e:
+        raise ValueError(f"file {path} is not can not be opened in [{mode}] mode") from e
+    except IsADirectoryError as e:
+        raise ValueError(f"file {path} is a directory") from e
+    except OSError as e:
+        raise ValueError(f"file {path} is not a file") from e
+    except Exception as e:
+        raise ValueError(f"unknown error with file {path}") from e
 
 
 def check_args(args: Namespace) -> Args:
     MINIMUM_EACH_VALUE = 100
     a = Args()
 
-    # paths (and read property) are checked by the ArgParser
+    # paths (and read property)
     if args.cfg_path is not None:
         a.cfg_path = check_path(args.cfg_path)
     if args.usernames is not None:
