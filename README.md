@@ -191,10 +191,10 @@ Please read the [changelog](changelog.md) file for the full history !
 <details>
   <summary>  first release (click here to expand) </summary>
 
-**v1.0** beta candidate (a.k.a. dev)
+**v1.0** beta candidate (1.0.0-dev)
 
 - add option to change Tor ID each X requests
-- new `TupleGenerator` that yields products of conbinations
+- new `TupleGenerator` that yields products of combinations
 - renew http session each Tor ID swap
 - `ThreadPool` is not closed/joined/terminated/deleted and then recreated anymore ! we use POSIX condition variables !
 - somehow improved performance by 6.9% (not sure how)
@@ -202,7 +202,7 @@ Please read the [changelog](changelog.md) file for the full history !
 - consistent naming for variables and files
 - next up: beta, release candidate, and release (drastic changes should only happen between beta and release candidate)
 
-**v1.0** beta candidate (1.0.0-beta.1)
+**v1.0** beta (1.0.0-beta.1 and 1.0.1-beta.1)
 
 - `-t` for timeout, the maximum number of seconds to wait for one request
 - `-m` for max retries, the maximum number of retries for one request, as well as the maximum number of consecutive failures before shutting down
@@ -210,6 +210,12 @@ Please read the [changelog](changelog.md) file for the full history !
 - `-s` for sleep, the amount of seconds to wait between each Tor ID swap
 - `-a` for use_all or all, to use permutations instead of combinations in generators
 - each worker has its own session (no more shared session) and is renewed each Tor ID swap
+
+**v1.0** candidate (1.0.1-rc1)
+
+- no breaking changes here
+- few bug fixes and minor refactors
+- opened Tor proxy to http and https (this should not slow down the process)
 
 </details>
 
