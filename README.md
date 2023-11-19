@@ -216,6 +216,7 @@ Please read the [changelog](changelog.md) file for the full history !
 - no breaking changes here
 - few bug fixes and minor refactors
 - opened Tor proxy to http and https (this should not slow down the process)
+- faster thread identification (no more `threading.current_thread().name.split('-')[1].split(' ')[0]`)
 
 </details>
 
@@ -227,7 +228,7 @@ Please read the [changelog](changelog.md) file for the full history !
 - [ ] option to not use tor (?)
 - [x] option to change Tor ID each X requests (would need to implement a catch-up mechanism because thread jobs are unordered) (v1.0.0-dev)
 - [ ] option to use a running tor instance/service
-- [ ] choose protocol (http, https, ssh, etc.)
+- [ ] choose protocol (http, https, ssh, etc.) (opened http and https in 1.0.1-rc1)
 - [x] dynamic change between `combinations` and `permutations` (v1.0.0-beta.1)
 
 **Known Bugs** (latest fix)
