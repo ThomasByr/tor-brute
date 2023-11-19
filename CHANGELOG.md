@@ -19,7 +19,7 @@
 - account for `ReadTimeout` in `requests` (and other errors)
 - account for ip check failure, successive failures, and exit node unchanged
 - `logging.critical` sends SIGTERM to all threads and shows cursor back
-  
+
 ## first release
 
 **v1.0** beta candidate (1.0.0-dev)
@@ -47,3 +47,4 @@
 - no breaking changes here
 - few bug fixes and minor refactors
 - opened Tor proxy to http and https (this should not slow down the process)
+- faster thread identification (no more `threading.current_thread().name.split('-')[1].split(' ')[0]`)
