@@ -17,6 +17,23 @@ from .cli_parser import Args
 __all__ = ["App"]
 
 
+def check_cfg(cfg: ConfigParser):
+    """Check if the config file is valid"""
+    if not cfg.has_section("url-endpoints"):
+        raise ValueError("missing section [url-endpoints] in config file")
+    if not cfg.has_section("html-fields"):
+        raise ValueError("missing section [html-fields] in config file")
+
+    if not cfg.has_option("url-endpoints", "target"):
+        raise ValueError("missing option [target] in section [url-endpoints]")
+    if not cfg.has_option("url-endpoints", "post_url"):
+        raise ValueError("missing option [post_url] in section [url-endpoints]")
+    if not cfg.has_option("html-fields", "username_field"):
+        raise ValueError("missing option [username_field] in section [html-fields]")
+    if not cfg.has_option("html-fields", "password_field"):
+        raise ValueError("missing option [password_field] in section [html-fields]")
+
+
 class App:
     def __init__(self, args: Args) -> None:
         self.consecutive_fails = 0
@@ -29,8 +46,10 @@ class App:
         self.logger = logging.getLogger(".".join(__name__.split(".")[1:]))
         self.cfg = ConfigParser()
         self.cfg.read(args.cfg_path)
+        check_cfg(self.cfg)
 
         self.sessions: dict[int, requests.Session] = {}
+
         self.target = re.compile(self.cfg["url-endpoints"]["target"])
         self.post_url = self.cfg["url-endpoints"]["post_url"]
 
@@ -47,7 +66,7 @@ class App:
         self.sleep = args.sleep
         self.use_all = args.use_all
 
-    def post_search(self, pport: int, username_field: str, password_field: str) -> bool:
+    def post_search(self, pport: int, username: str, password: str) -> bool:
         response: requests.Response = None
         last_exception: str = None
         try_no = 0
@@ -64,7 +83,7 @@ class App:
             try:
                 response = session.post(
                     self.post_url,
-                    data={self.username_field: username_field, self.password_field: password_field},
+                    data={self.username_field: username, self.password_field: password},
                     allow_redirects=True,  # maybe new page when successfull login
                     timeout=self.timeout,  # 10 secondes by default
                 )
@@ -86,8 +105,8 @@ class App:
             if not response or response.status_code != 200:
                 self.logger.error(
                     "failed multiple reconnect to target [%s]:[%s] : %s ❌",
-                    username_field,
-                    password_field,
+                    username,
+                    password,
                     last_exception,
                 )
                 with self.lock:
@@ -96,7 +115,7 @@ class App:
                     self.consecutive_fails += 1
 
         if response and self.target.search(response.text):
-            self.logger.info("Login successful using [%s]:[%s] 🎉", username_field, password_field)
+            self.logger.info("Login successful using [%s]:[%s] 🎉", username, password)
 
     def build_session(self, pport: int) -> requests.Session:
         """Build a new session with the new port"""
