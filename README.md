@@ -218,6 +218,10 @@ Please read the [changelog](changelog.md) file for the full history !
 - opened Tor proxy to http and https (this should not slow down the process)
 - faster thread identification (no more `threading.current_thread().name.split('-')[1].split(' ')[0]`)
 
+**v1.0** release (1.0.1)
+
+- config file checkers
+
 </details>
 
 ## 🐛 Bugs and TODO
