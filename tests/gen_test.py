@@ -5,6 +5,10 @@ from src.generator import PasswdGenerator, TupleGenerator
 
 cwd = os.getcwd()
 file_path = os.path.join(cwd, "tmp.txt")
+
+# file content keeps "\n" so either use strip() when counting or begin right after """
+# file_content = Literal['\nfoo\nbar\nbaz\ntest\nadmin\n']
+# strip would remove the first and last "\n" so that it does not generate empty strings
 file_content = """
 foo
 bar
@@ -31,15 +35,15 @@ def test_basic():
     g0 = PasswdGenerator(file_path, 2)
     g1 = PasswdGenerator(file_path, 2, True)
 
-    assert g0.count == 21
-    assert g1.count == 36
+    assert g0.count == 15  # 5C2 + 5
+    assert g1.count == 25  # 5P2 + 5
 
-    assert len(list(g0)) == 21
-    assert len(list(g1)) == 36
+    assert len(list(g0)) == 15
+    assert len(list(g1)) == 25
 
 
 def test_length():
-    for i in range(n := len(file_content.splitlines())):
+    for i in range(n := len(file_content.strip().splitlines())):
         g0 = PasswdGenerator(file_path, i)
         g1 = PasswdGenerator(file_path, i, True)
 
@@ -52,7 +56,7 @@ def test_length():
 
 def test_tuple():
     generators = []
-    n = len(file_content.splitlines())
+    n = len(file_content.strip().splitlines())
     m = 3  #! KEEP LOW
     p = 2  #! KEEP LOW
     for i in range(m):
