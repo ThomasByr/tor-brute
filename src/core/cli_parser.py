@@ -61,18 +61,8 @@ def parser() -> WeakParser:
         epilog="visit us on GitHub : https://github.com/ThomasByr/tor-brute",
     )
     return (
-        parser.add_argument(
-            "-v",
-            "--version",
-            action="version",
-            version=f"%(prog)s {__version__}",
-        )
-        .add_path_argument(
-            "-c",
-            "--config",
-            dest="cfg_path",
-            help="Path to the config file",
-        )
+        parser.add_argument("-v", "--version", action="version", version=f"%(prog)s {__version__}")
+        .add_path_argument("-c", "--config", dest="cfg_path", help="Path to the config file")
         .add_path_argument(
             "-u",
             "--user",
@@ -111,12 +101,7 @@ def parser() -> WeakParser:
             dest="max_tries",
             help="how much to try to reconnect to the target and how many consecutive fail to consider before killing the app (default: 3)",
         )
-        .add_int_argument(
-            "-w",
-            "--threads",
-            dest="threads",
-            help="how much threads to use (default: 50)",
-        )
+        .add_int_argument("-w", "--threads", dest="threads", help="how much threads to use (default: 50)")
         .add_int_argument(
             "-s",
             "--sleep",
@@ -130,13 +115,7 @@ def parser() -> WeakParser:
             action="store_true",
             help="use all the possible permutations instead of the faster unordered classic (default: False)",
         )
-        .add_argument(
-            "-d",
-            "--debug",
-            dest="debug",
-            action="store_true",
-            help="Enable debug mode",
-        )
+        .add_argument("-d", "--debug", dest="debug", action="store_true", help="Enable debug mode")
     )
 
 
