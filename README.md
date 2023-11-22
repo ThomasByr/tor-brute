@@ -34,14 +34,16 @@
 >
 > Please note we do not officially support Windows or MacOS, but we do provide some instructions for those who want to use it on these platforms.
 
-You do not explicitly need a conda environment for the bot to run. But it is always recommended nontheless, especially because the next LTS of Ubuntu won't let users pip-install anything without a virtual environment. At the time of writing, this app `python >= 3.8` to run.
+You do not explicitly need a conda environment for the bot to run. But it is always recommended nontheless, especially because the next LTS of Ubuntu won't let users pip-install anything without a virtual environment. At the time of writing, this app requires `python >= 3.8` to run.
 
 First, install the dependencies :
 
 ```bash
 sudo apt-get update
 sudo apt-get install tor
-sudo service tor stop
+sudo service tor stop  # the app will start its own tor instance
+# or
+# sudo systemctl disable tor
 ```
 
 Then clone the repository and cd into it :
@@ -52,7 +54,7 @@ git clone git@github.com:ThomasByr/tor-brute.git
 cd tor-brute
 ```
 
-You can create and activate a conda environment with the following commands (make sure to give it a name in [environment.yml](environment.yml)) :
+You can create and activate a conda environment with the following commands :
 
 ```bash
 # Creates environment and install dependencies
@@ -60,44 +62,65 @@ conda env create -f environment.yml -y
 conda activate tor
 ```
 
-Finally, run the app in the background with `nohup` and `tee` :
+Finally, run the app in the background with `nohup` :
 
 ```bash
 # Runs the app in the background
-nohup python tor-brute.py 2>&1 | tee -a .log &
+nohup python tor_brute.py &
 ```
 
 or in the foreground :
 
 ```bash
 # Runs the app (lets you Ctrl+C to stop it)
-python tor-brute.py
+python tor_brute.py
 ```
 
 ## 🔧 Usage
 
-Simply create a `.cfg` file from [.cfg.example](.cfg.example) and fill it, then provide text files for both usernames and passwords.
+Simply create a `.cfg` file from [.cfg.example](.cfg.example) and fill it, then provide text files for both usernames and passwords. The app will try every combination of usernames and passwords, and will issue a log record for each successful login. If you have a user file that looks like this :
 
 ```txt
-username_or_password_part_1
-username_or_password_part_2
-username_or_password_part_3
-...
+foo
+bar
+baz
 ```
+
+The app will try these usernames (for combinations of size 2) (note that if you use `--all`, the app will create permutations instead of combinations) :
+
+```txt
+foo
+bar
+baz
+foobar
+foobaz
+barbaz
+```
+
+and for each one, try every password combination in the password file following the same logic.
+
+Once you are all set, you can run the app with :
 
 <!-- markdownlint-disable MD051 -->
 
-| argument            | hint                                  | default             |
-| ------------------- | ------------------------------------- | ------------------- |
-| `--help`            | show help message and exit            |                     |
-| `--version`         | show program's version                |                     |
-| `--debug`           | debug mode                            | `False`             |
-| `--config`          | path to the config file               | `.cfg`              |
-| `--users`           | path to the usernames file            | `assets/users.txt`  |
-| `--passwd`          | path to the passwords file            | `assets/passwd.txt` |
-| `--it-comb` [\*][1] | number of combination for user/passwd | `3, 2`              |
+| argument                  | hint                                       | default             |
+| ------------------------- | ------------------------------------------ | ------------------- |
+| `-h`, `--help`            | show help message and exit                 |                     |
+| `-v`, `--version`         | show program's version                     |                     |
+| `-d`, `--debug`           | debug mode                                 | `False`             |
+| `-c`, `--config`          | path to the config file                    | `.cfg`              |
+| `-u`, `--user`            | path to the usernames file                 | `assets/user.txt`   |
+| `-p`, `--passwd`          | path to the passwords file                 | `assets/passwd.txt` |
+| `-i`, `--iter` [\*][1]    | number of combination for user/passwd      | `3, 2`              |
+| `-e`, `--each`            | change Tor ID each X requests (0 or >=100) | `1000`              |
+| `-t`, `--timeout`         | timeout for http requests                  | `10`                |
+| `-m`, `--max-tries`       | how much to _retry_ stuff                  | `3`                 |
+| `-w`, `--threads` [\*][2] | number of threads                          | `50`                |
+| `-s`, `--sleep`           | additional sleep time between each ID swap | `0`                 |
+| `-a`, `--all`             | use permutations (unordered combination)   | `False`             |
 
-[1]: ## "a file with a, b, c with it-comb=2 would produce a, b, c, ab, ac, ba, bc, ca, cb"
+[1]: ## "a file with a, b, c with iter=2 would produce a, b, c, ab, ac, ba, bc, ca, cb"
+[2]: ## "too many threads might result in a server timeout"
 
 <!-- markdownlint-enable MD051 -->
 
@@ -166,12 +189,38 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Please read the [changelog](changelog.md) file for the full history !
 
 <details>
-  <summary>  alpha (click here to expand) </summary>
+  <summary>  first release (click here to expand) </summary>
 
-**v0.1** first public release
+**v1.0** beta candidate (1.0.0-dev)
 
-- use threads
-- create a cli
+- add option to change Tor ID each X requests
+- new `TupleGenerator` that yields products of combinations
+- renew http session each Tor ID swap
+- `ThreadPool` is not closed/joined/terminated/deleted and then recreated anymore ! we use POSIX condition variables !
+- somehow improved performance by 6.9% (not sure how)
+- RAM usage does not seem to increase anymore (to be confirmed)
+- consistent naming for variables and files
+- next up: beta, release candidate, and release (drastic changes should only happen between beta and release candidate)
+
+**v1.0** beta (1.0.0-beta.1 and 1.0.1-beta.1)
+
+- `-t` for timeout, the maximum number of seconds to wait for one request
+- `-m` for max retries, the maximum number of retries for one request, as well as the maximum number of consecutive failures before shutting down
+- `-w` for workers of threads, pretty self-explanatory
+- `-s` for sleep, the amount of seconds to wait between each Tor ID swap
+- `-a` for use_all or all, to use permutations instead of combinations in generators
+- each worker has its own session (no more shared session) and is renewed each Tor ID swap
+
+**v1.0** candidate (1.0.1-rc1)
+
+- no breaking changes here
+- few bug fixes and minor refactors
+- opened Tor proxy to http and https (this should not slow down the process)
+- faster thread identification (no more `threading.current_thread().name.split('-')[1].split(' ')[0]`)
+
+**v1.0** release (1.0.1)
+
+- config file checkers
 
 </details>
 
@@ -179,11 +228,17 @@ Please read the [changelog](changelog.md) file for the full history !
 
 **TODO** (first implementation version)
 
-- [x] add a simple cli
+- [x] add a simple cli (0.1.1)
+- [ ] option to not use tor (?)
+- [x] option to change Tor ID each X requests (would need to implement a catch-up mechanism because thread jobs are unordered) (v1.0.0-dev)
+- [ ] option to use a running tor instance/service
+- [ ] choose protocol (http, https, ssh, etc.) (opened http and https in 1.0.1-rc1)
+- [x] dynamic change between `combinations` and `permutations` (v1.0.0-beta.1)
 
 **Known Bugs** (latest fix)
 
-- [ ] ...
+- [ ] lagging threads are not catching up, especially when `ReadTimeout` is reached (interferes with Tor ID swap)
+- [ ] sometimes, successfull logins are not reported, or are reported twice (might be fixed with separate sessions for each thread)
 
 ## 🎨 Logo and Icons
 
