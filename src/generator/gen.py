@@ -26,7 +26,7 @@ class PasswdGenerator:
         """yields all possible combinations of the chunks"""
         for i in range(1, self.max_cmb_len + 1):
             for combination in self.__f(self.chunks, i):
-                yield "".join(combination).lower()
+                yield "".join(combination)  # .lower()
 
     @property
     def count(self) -> int:
