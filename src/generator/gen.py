@@ -1,9 +1,15 @@
+from __future__ import annotations
+
 import logging
+import re
 from itertools import combinations, permutations, product
 from math import comb, perm, prod
 from typing import Generator
 
 __all__ = ["PasswdGenerator", "TupleGenerator"]
+
+
+is_whitespace = re.compile(r"\s+").match
 
 
 class PasswdGenerator:
@@ -17,7 +23,7 @@ class PasswdGenerator:
         self.max_cmb_len = max_cmb_len
         self.filepath = filepath
         with open(filepath, "r", encoding="utf-8") as f:
-            self.chunks = f.read().splitlines(keepends=False)
+            self.chunks = [line.strip() for line in f if not is_whitespace(line)]
 
         # bellow is NOT executed if not debug
         self.logger.debug("[*] %s loaded with %d elements", filepath, self.count)
