@@ -178,7 +178,7 @@ class App:
         length = len(self.bar_title(0, digits, user.count))
 
         self.logger.info("Starting App 🚀")
-        self.logger.info("Got %d users and %d passwords 🫧", user.count, passwd.count)
+        self.logger.info("Got %d users and %d passwords ⚙️", user.count, passwd.count)
 
         def on_each():
             """setup session and bar title"""

@@ -85,7 +85,7 @@ def formatter(
 
 
 class UsefulFormatter(logging.Formatter):
-    name_width = 4
+    name_width = 10
     dt_fmt = "%Y-%m-%d %H:%M:%S"
 
     def __init__(self, *args: Any, colored_output: bool = True, **kwargs: Any) -> None:
