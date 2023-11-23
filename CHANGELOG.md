@@ -52,3 +52,6 @@
 **v1.0** release (1.0.1)
 
 - config file checkers
+- tests for generators
+- generators now skip empty or blank lines in .txt files and do no longer lowercase everything
+- fixed consecutive failure logic and logging
