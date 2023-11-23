@@ -92,9 +92,10 @@ class TorProxy:
                 if not response or response.status_code != 200:
                     self.logger.error(
                         "failed multiple reconnect to httpbin.org (%d/%d) ❌",
-                        self.__consecutive_fails,
+                        self.__consecutive_fails + 1,
                         self.max_tries,
                     )
+                    self.__consecutive_fails += 1
                     if self.__consecutive_fails >= self.max_tries:
                         self.logger.critical("too many consecutive fails, exiting ... ❌")
                     return None
