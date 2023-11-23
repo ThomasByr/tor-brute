@@ -224,6 +224,11 @@ Please read the [changelog](changelog.md) file for the full history !
 - tests for generators
 - generators now skip empty or blank lines in .txt files and do no longer lowercase everything
 - fixed consecutive failure logic and logging
+- changed emotes ... because
+
+**v1.1** (1.1.0)
+
+- removed `no-tor` suggestion
 
 </details>
 
@@ -232,7 +237,6 @@ Please read the [changelog](changelog.md) file for the full history !
 **TODO** (first implementation version)
 
 - [x] add a simple cli (0.1.1)
-- [ ] ~~option to not use tor~~ discarded
 - [x] option to change Tor ID each X requests (would need to implement a catch-up mechanism because thread jobs are unordered) (v1.0.0-dev)
 - [ ] option to use a running tor instance/service
 - [ ] choose protocol (http, https, ssh, etc.) (opened http and https in 1.0.1-rc1)
