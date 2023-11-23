@@ -1,6 +1,7 @@
 # Changelog
 
 <summary>The full history, or so was I told...</summary>
+versions next to titles correspond to the first version that introduced either the release or the minor
 
 ## alpha
 
@@ -55,3 +56,8 @@
 - tests for generators
 - generators now skip empty or blank lines in .txt files and do no longer lowercase everything
 - fixed consecutive failure logic and logging
+- changed emotes ... because
+
+**v1.1** (1.1.0)
+
+- removed `no-tor` suggestion
