@@ -104,15 +104,17 @@ class App:
         else:
             if not response or response.status_code != 200:
                 self.logger.error(
-                    "failed multiple reconnect to target [%s]:[%s] : %s ❌",
+                    "failed multiple reconnect to target [%s]:[%s] : %s (%d/%d) ❌",
                     username,
                     password,
                     last_exception,
+                    self.consecutive_fails + 1,
+                    self.max_tries,
                 )
                 with self.lock:
+                    self.consecutive_fails += 1
                     if self.consecutive_fails >= self.max_tries:
                         self.logger.critical("too many consecutive fails, exiting ... ❌")
-                    self.consecutive_fails += 1
 
         if response and self.target.search(response.text):
             self.logger.info("Login successful using [%s]:[%s] 🎉", username, password)
@@ -176,7 +178,7 @@ class App:
         length = len(self.bar_title(0, digits, user.count))
 
         self.logger.info("Starting App 🚀")
-        self.logger.info("Got %d users and %d passwords 🫧", user.count, passwd.count)
+        self.logger.info("Got %d users and %d passwords ⚙️", user.count, passwd.count)
 
         def on_each():
             """setup session and bar title"""
